@@ -125,7 +125,7 @@ Phase 1 includes:
 
 For details about Phase 1:
 
-**[Read PHASE_1.md](PHASE_1.md)**
+**[Read PHASE_1.md](docs/PHASE_1.md)**
 
 ---
 
