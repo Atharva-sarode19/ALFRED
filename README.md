@@ -2,57 +2,82 @@
 
 ### Adaptive Language Framework for Reasoning, Execution & Dialogue
 
-ALFRED is a personal AI assistant project developed to understand how modern AI assistants work using **Large Language Models, AI agents, tool calling, APIs, speech processing, and frontend development**.
+ALFRED is a personal AI assistant project built to explore **LLMs, AI agents, tool calling, voice interaction, and frontend development**.
 
-The project is being developed phase-by-phase, with each phase adding new capabilities to the assistant.
-
----
+The project is developed phase-by-phase, with each phase adding new capabilities while building on the previous system.
 
 ## Current Version
 
 **v0.2.0 — Phase 2: Voice Interaction**
 
----
-
-## Objectives
-
-- Build a functional AI agent using an LLM.
-- Understand LLM integration and function calling.
-- Implement tool-based agent execution.
-- Develop a backend using FastAPI.
-- Add speech-to-text and text-to-speech capabilities.
-- Build a voice-based frontend.
-- Maintain conversation history and agent activity.
-
----
-
 ## Phase 1 — Core AI Agent
 
-The first phase focused on building the core intelligence of ALFRED.
+The first phase focused on building the core AI agent and its tool-based execution system.
 
-### Features
+* Google Gemini integration
+* Agent orchestration
+* Function calling
+* Tool registry
+* Calculator tool
+* Date & time tool
+* FastAPI backend
+* Pytest testing
 
-- Google Gemini integration
-- Agent orchestration
-- Function calling
-- Tool registry
-- Calculator tool
-- Date & time tool
-- FastAPI backend
-- Pydantic models
-- Pytest testing
+Phase 1 established the main agent architecture, allowing ALFRED to process requests and use tools when required.
 
-### Example Workflow
+## Phase 2 — Voice Interaction
+
+Phase 2 adds a voice interface to the existing ALFRED agent.
+
+* Speech-to-text using `faster-whisper`
+* Text-to-speech using Edge TTS
+* Microphone input and audio playback
+* Voice API endpoints
+* React + TypeScript frontend
+* Conversation history
+* Agent activity trace
+* Voice states: `IDLE`, `LISTENING`, `THINKING`, `EXECUTING`, `SPEAKING`
+
+The main goal of Phase 2 is to allow users to **speak with ALFRED and receive spoken responses** while continuing to use the same agent and tools from Phase 1.
+
+## System Flow
 
 ```text
-User
- ↓
+Voice Input
+     ↓
+Speech-to-Text
+     ↓
 ALFRED Agent
- ↓
-Gemini
- ↓
-Calculator Tool
- ↓
-Result
- ↓
-Final Response
+     ↓
+Gemini + Tools
+     ↓
+Response
+     ↓
+Text-to-Speech
+     ↓
+Voice Output
+```
+
+## Tech Stack
+
+* **Backend:** Python, FastAPI, Pydantic
+* **LLM:** Google Gemini
+* **STT:** faster-whisper
+* **TTS:** Edge TTS
+* **Frontend:** React, TypeScript, Vite
+* **Testing:** Pytest
+* **Version Control:** Git & GitHub
+
+## Roadmap
+
+* [x] Phase 1 — Core AI Agent
+* [x] Phase 2 — Voice Interaction
+* [ ] Phase 3 — Real-World Tools
+* [ ] Phase 4 — Memory
+* [ ] Phase 5 — Automation
+* [ ] Phase 6 — Mobile
+* [ ] Phase 7 — Advanced Capabilities
+
+## License
+
+This project is licensed under the **MIT License**.
