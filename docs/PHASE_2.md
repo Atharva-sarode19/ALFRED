@@ -1,4 +1,3 @@
-````markdown
 # ALFRED — Phase 2
 
 ## Voice Interaction
@@ -26,7 +25,6 @@ Phase 2 includes:
 - Voice states
 - Integration with the Phase 1 agent
 
----
 
 ## 🧠 How It Works
 
