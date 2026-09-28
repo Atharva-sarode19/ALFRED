@@ -281,6 +281,3 @@ The goal was to build the voice layer while keeping the Phase 1 agent as the cor
 **Adaptive Language Framework for Reasoning, Execution & Dialogue**
 
 > **Understand. Reason. Act.**
-
-```
-```
