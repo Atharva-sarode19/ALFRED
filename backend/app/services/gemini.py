@@ -30,8 +30,11 @@ from tenacity import (
 from app.config.settings import Settings, get_settings
 from app.services.llm import (
     GenerationResult,
+    LLMAuthenticationError,
+    LLMBadRequestError,
     LLMProvider,
     LLMProviderError,
+    LLMRateLimitError,
     LLMUnavailableError,
     Message,
     Role,
@@ -143,10 +146,29 @@ class GeminiProvider(LLMProvider):
                 "recover after retrying. Please try again shortly."
             ) from exc
         except genai_errors.ClientError as exc:
-            logger.error("Gemini rejected the request: %s", exc)
-            raise LLMUnavailableError(
-                "The language model rejected the request. Check server logs "
-                "for details."
+            status_code = getattr(exc, "code", None)
+            if status_code in (401, 403):
+                logger.error(
+                    "Gemini rejected our credentials (status %s): %s", status_code, exc
+                )
+                raise LLMAuthenticationError(
+                    "The language model rejected our credentials. The "
+                    "GEMINI_API_KEY is missing, invalid, or unsupported by "
+                    "the API (e.g. a newer 'AQ.'-format key that the REST "
+                    "endpoint doesn't accept yet) -- check server logs and "
+                    "the key configuration."
+                ) from exc
+            if status_code == 429:
+                logger.error("Gemini rate-limited the request: %s", exc)
+                raise LLMRateLimitError(
+                    "The language model is rate-limiting requests right now. "
+                    "Please wait a moment and try again."
+                ) from exc
+            logger.error("Gemini rejected the request (status %s): %s", status_code, exc)
+            raise LLMBadRequestError(
+                "The language model rejected the request itself (e.g. a "
+                "malformed prompt or tool schema). Check server logs for "
+                "details."
             ) from exc
         except Exception as exc:  # noqa: BLE001 - normalize all provider errors
             logger.exception("Gemini generate_content call failed")

@@ -3,8 +3,13 @@ uvicorn[standard]>=0.30
 pydantic>=2.7
 python-dotenv>=1.0
 google-genai>=0.3
-tenacity>=8.2
+python-multipart>=0.0.9
 tzdata
+
+# voice (Phase 2)
+faster-whisper>=1.0
+edge-tts>=6.1
+elevenlabs>=1.0
 
 # testing
 pytest>=8.0

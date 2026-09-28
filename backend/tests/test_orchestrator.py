@@ -2,7 +2,13 @@ import pytest
 
 from app.agent.orchestrator import AgentOrchestrator
 from app.agent.state import ConversationState
-from app.services.llm import GenerationResult, LLMProvider, ToolCallRequest
+from app.services.llm import (
+    GenerationResult,
+    LLMAuthenticationError,
+    LLMProvider,
+    LLMRateLimitError,
+    ToolCallRequest,
+)
 from app.tools.registry import build_default_registry
 
 
@@ -27,6 +33,19 @@ class ScriptedLLMProvider(LLMProvider):
         result = self._script[self.calls]
         self.calls += 1
         return result
+
+
+class FailingLLMProvider(LLMProvider):
+    """A fake LLMProvider that always raises a given exception."""
+
+    def __init__(self, exc: Exception):
+        self._exc = exc
+
+    async def generate(self, messages, *, system_instruction=None):
+        raise self._exc
+
+    async def generate_with_tools(self, messages, tools, *, system_instruction=None):
+        raise self._exc
 
 
 @pytest.mark.asyncio
@@ -101,3 +120,28 @@ async def test_disallowed_tool_name_is_rejected_without_executing():
     stages = [step.stage for step in result.trace]
     assert "tool_denied" in stages
     assert result.response_text == "I can't do that."
+
+
+@pytest.mark.asyncio
+async def test_auth_error_gives_a_distinct_configuration_message():
+    llm = FailingLLMProvider(LLMAuthenticationError("credentials rejected"))
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s5")
+
+    result = await orchestrator.process(state, "What time is it in Tokyo?")
+
+    assert "credentials" in result.response_text
+    assert "retry" not in result.response_text.lower()
+    assert any(step.stage == "error" for step in result.trace)
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_error_gives_a_distinct_retry_message():
+    llm = FailingLLMProvider(LLMRateLimitError("rate limited"))
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s6")
+
+    result = await orchestrator.process(state, "What time is it in Tokyo?")
+
+    assert "rate-limiting" in result.response_text
+    assert any(step.stage == "error" for step in result.trace)

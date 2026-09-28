@@ -1,0 +1,157 @@
+.app-shell {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--alfred-space-4) + env(safe-area-inset-top, 0px)) var(--alfred-space-4) var(--alfred-space-3);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+
+.app-shell__brand {
+  margin: 0;
+  color: var(--alfred-ink);
+}
+.app-shell__brand span {
+  color: var(--alfred-ink-faint);
+}
+
+.app-shell__clock {
+  margin: 0;
+  color: var(--alfred-ink-faint);
+  font-size: 12px;
+}
+
+.app-shell__stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--alfred-space-2);
+  padding: 0 var(--alfred-space-4);
+  min-height: 0;
+}
+
+.app-shell__state-label {
+  margin: var(--alfred-space-3) 0 0;
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  color: var(--alfred-ink);
+}
+
+.app-shell__sub-label {
+  margin: 0;
+  font-size: 11px;
+  color: var(--alfred-ink-faint);
+  text-align: center;
+  min-height: 14px;
+}
+
+.app-shell__sheet-handle {
+  align-self: center;
+  margin-bottom: calc(var(--alfred-space-2) + env(safe-area-inset-bottom, 0px));
+  background: none;
+  border: 1px solid var(--alfred-hairline);
+  color: var(--alfred-ink-faint);
+  border-radius: var(--alfred-radius-sm);
+  padding: 6px 18px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.app-shell__sheet-handle:hover {
+  color: var(--alfred-ink);
+  border-color: var(--alfred-ink-faint);
+}
+
+.app-shell__sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60%;
+  background: var(--alfred-surface);
+  border-top: 1px solid var(--alfred-hairline);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alfred-space-3);
+  padding: var(--alfred-space-3) var(--alfred-space-4) calc(var(--alfred-space-3) + env(safe-area-inset-bottom, 0px));
+  transform: translateY(100%);
+  transition: transform 0.28s ease;
+}
+.app-shell__sheet--open {
+  transform: translateY(0);
+}
+
+.app-shell__sheet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.confirm-card,
+.error-banner {
+  border: 1px solid var(--alfred-hairline);
+  background: var(--alfred-surface);
+  border-radius: var(--alfred-radius-md);
+  padding: var(--alfred-space-3);
+  font-size: 0.9rem;
+  max-width: 360px;
+}
+
+.error-banner {
+  border-color: var(--alfred-error);
+}
+
+.confirm-card__actions {
+  display: flex;
+  gap: var(--alfred-space-2);
+  margin-top: var(--alfred-space-2);
+}
+
+.confirm-card__actions button,
+.error-banner button {
+  background: var(--alfred-surface-raised);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-sm);
+  padding: var(--alfred-space-1) var(--alfred-space-3);
+  cursor: pointer;
+}
+
+.confirm-card__actions button:first-child {
+  border-color: var(--alfred-ink);
+  color: var(--alfred-ink);
+}
+
+.text-fallback {
+  display: flex;
+  gap: var(--alfred-space-2);
+}
+
+.text-fallback input {
+  flex: 1;
+  background: var(--alfred-surface-raised);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-sm);
+  padding: var(--alfred-space-2) var(--alfred-space-3);
+  color: var(--alfred-ink);
+  font-family: var(--alfred-font-ui);
+}
+
+.text-fallback button {
+  background: none;
+  border: 1px solid var(--alfred-ink-faint);
+  color: var(--alfred-ink);
+  border-radius: var(--alfred-radius-sm);
+  padding: var(--alfred-space-2) var(--alfred-space-3);
+  cursor: pointer;
+}

@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.chat import get_tool_registry, router as chat_router
+from app.api.voice import router as voice_router
 from app.config.settings import get_settings
 
 settings = get_settings()
@@ -27,7 +28,7 @@ logger = logging.getLogger("alfred.main")
 app = FastAPI(
     title="ALFRED",
     description="Adaptive Language Framework for Reasoning, Execution & Dialogue",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # Phase 1: permissive CORS for local frontend dev. Tighten before any
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 app.include_router(chat_router)
+app.include_router(voice_router)
 
 
 @app.get("/api/health")

@@ -71,3 +71,28 @@ dist/
 *.tmp
 *.temp
 *.bak
+
+# =========================
+# Frontend (Phase 2)
+# =========================
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+coverage/
+npm-debug.log*
+
+# =========================
+# Audio (generated / test files)
+# =========================
+*.wav
+*.mp3
+*.webm
+*.m4a
+audio_tmp/
+recordings/
+
+# =========================
+# Local test scaffolding
+# =========================
+body.json

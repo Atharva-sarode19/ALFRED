@@ -74,7 +74,19 @@ class LLMProviderError(RuntimeError):
 
 
 class LLMUnavailableError(LLMProviderError):
-    """Raised when an LLM provider cannot fulfil a request after retries."""
+    """Raised when a provider remains unavailable after retrying (e.g. 503)."""
+
+
+class LLMAuthenticationError(LLMProviderError):
+    """Raised when the provider rejects our credentials (e.g. 401/403)."""
+
+
+class LLMRateLimitError(LLMProviderError):
+    """Raised when the provider is rate-limiting us (e.g. 429, retries exhausted)."""
+
+
+class LLMBadRequestError(LLMProviderError):
+    """Raised when the provider rejects the request itself (e.g. 400 malformed request)."""
 
 
 class LLMProvider(ABC):

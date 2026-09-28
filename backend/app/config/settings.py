@@ -62,6 +62,43 @@ class Settings:
             raise ConfigurationError("MAX_AGENT_ITERATIONS must be >= 1")
         return value
 
+    # ---- Speech-to-text -------------------------------------------------
+    @property
+    def whisper_model_size(self) -> str:
+        return os.getenv("WHISPER_MODEL_SIZE", "base")
+
+    @property
+    def whisper_compute_type(self) -> str:
+        # "int8" is a good CPU-friendly default; use "float16" on GPU.
+        return os.getenv("WHISPER_COMPUTE_TYPE", "int8")
+
+    @property
+    def whisper_language(self) -> str | None:
+        # ISO-639-1 code (e.g. "en", "ja"). Empty/unset = auto-detect.
+        value = os.getenv("WHISPER_LANGUAGE", "en")
+        return value or None
+
+    @property
+    def whisper_initial_prompt(self) -> str | None:
+        value = os.getenv(
+            "WHISPER_INITIAL_PROMPT",
+            "The user's name is Atharva. This is a conversation with an AI assistant called ALFRED.",
+        )
+        return value or None
+
+    # ---- Text-to-speech ---------------------------------------------------
+    @property
+    def tts_voice(self) -> str:
+        return os.getenv("TTS_VOICE", "en-US-GuyNeural")
+
+    @property
+    def elevenlabs_api_key(self) -> str:
+        return os.getenv("ELEVENLABS_API_KEY", "")
+
+    @property
+    def elevenlabs_voice_id(self) -> str:
+        return os.getenv("ELEVENLABS_VOICE_ID", "")
+
     # ---- Database -------------------------------------------------------
     @property
     def database_url(self) -> str:
