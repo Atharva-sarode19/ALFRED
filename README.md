@@ -2,7 +2,7 @@
 
 ### Adaptive Language Framework for Reasoning, Execution & Dialogue
 
-**"Your intelligent interface to the digital world."**
+**"Understand. Reason. Act."**
 
 ## About
 
@@ -214,4 +214,4 @@ Some areas where ALFRED can be expanded include:
 
 ---
 
-**ALFRED — Your intelligent interface to the digital world.**
+**ALFRED — Understand. Reason. Act.**
