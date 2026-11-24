@@ -1,0 +1,133 @@
+.voice-dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--alfred-space-3);
+  padding: var(--alfred-space-4) 0;
+}
+
+.voice-dial__button {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: none;
+  background: var(--alfred-surface);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: var(--alfred-brass);
+  transition: color 240ms ease, box-shadow 240ms ease;
+}
+
+.voice-dial__face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.voice-dial__ring-outer {
+  fill: none;
+  stroke: var(--alfred-hairline);
+  stroke-width: 1.5;
+}
+
+.voice-dial__face-inner {
+  fill: var(--alfred-surface-raised);
+  stroke: var(--alfred-brass-dim);
+  stroke-width: 1;
+}
+
+.voice-dial__tick {
+  stroke: var(--alfred-ink-faint);
+  stroke-width: 1.5;
+}
+
+.voice-dial__glyph {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+}
+
+.voice-dial__label {
+  font-size: 0.85rem;
+  color: var(--alfred-ink-muted);
+  min-height: 1.2em;
+  text-align: center;
+}
+
+/* --- state treatments ------------------------------------------------- */
+
+.voice-dial__button--idle .voice-dial__ring-outer {
+  stroke: var(--alfred-brass-dim);
+}
+
+.voice-dial__button--listening {
+  color: var(--alfred-verdigris);
+}
+.voice-dial__button--listening .voice-dial__ring-outer {
+  stroke: var(--alfred-verdigris);
+  animation: alfred-pulse-ring 1.6s ease-in-out infinite;
+}
+
+.voice-dial__sweep-group {
+  opacity: 0;
+  transform-origin: 100px 100px;
+}
+.voice-dial__sweep-dot {
+  fill: var(--alfred-brass);
+}
+
+.voice-dial__button--thinking .voice-dial__sweep-group,
+.voice-dial__button--processing .voice-dial__sweep-group {
+  opacity: 1;
+  animation: alfred-tick-sweep 1.8s linear infinite;
+}
+
+.voice-dial__button--speaking {
+  color: var(--alfred-ink);
+}
+.voice-dial__button--speaking .voice-dial__face-inner {
+  animation: alfred-breathe 1.4s ease-in-out infinite;
+}
+
+.voice-dial__button--error {
+  color: var(--alfred-error);
+}
+.voice-dial__button--error .voice-dial__ring-outer {
+  stroke: var(--alfred-error);
+}
+
+@keyframes alfred-pulse-ring {
+  0%,
+  100% {
+    stroke-width: 1.5;
+    opacity: 0.7;
+  }
+  50% {
+    stroke-width: 3;
+    opacity: 1;
+  }
+}
+
+@keyframes alfred-tick-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes alfred-breathe {
+  0%,
+  100% {
+    stroke-width: 1;
+  }
+  50% {
+    stroke-width: 2.5;
+  }
+}

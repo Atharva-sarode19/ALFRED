@@ -1,0 +1,159 @@
+import pytest
+
+from app.agent.orchestrator import AgentOrchestrator
+from app.agent.state import ConversationState
+from app.services.llm import (
+    GenerationResult,
+    LLMAuthenticationError,
+    LLMProvider,
+    LLMRateLimitError,
+    ToolCallRequest,
+)
+from app.tools.calculator import CalculatorTool
+from app.tools.datetime_tool import DateTimeTool
+from app.tools.registry import ToolRegistry
+
+
+def build_default_registry() -> ToolRegistry:
+    # Calculator + datetime only: these tests exercise the loop, not persistence.
+    # (Full-registry behaviour is covered in test_registry.py.)
+    registry = ToolRegistry()
+    registry.register(CalculatorTool())
+    registry.register(DateTimeTool())
+    return registry
+
+
+class ScriptedLLMProvider(LLMProvider):
+    """A fake LLMProvider that returns a pre-scripted sequence of results.
+
+    Lets us test the orchestrator's tool-calling loop deterministically,
+    without ever touching the real Gemini API.
+    """
+
+    def __init__(self, script: list[GenerationResult]):
+        self._script = list(script)
+        self.calls = 0
+
+    async def generate(self, messages, *, system_instruction=None):
+        return await self._next()
+
+    async def generate_with_tools(self, messages, tools, *, system_instruction=None):
+        return await self._next()
+
+    async def _next(self) -> GenerationResult:
+        result = self._script[self.calls]
+        self.calls += 1
+        return result
+
+
+class FailingLLMProvider(LLMProvider):
+    """A fake LLMProvider that always raises a given exception."""
+
+    def __init__(self, exc: Exception):
+        self._exc = exc
+
+    async def generate(self, messages, *, system_instruction=None):
+        raise self._exc
+
+    async def generate_with_tools(self, messages, tools, *, system_instruction=None):
+        raise self._exc
+
+
+@pytest.mark.asyncio
+async def test_direct_text_response_no_tools_needed():
+    llm = ScriptedLLMProvider([GenerationResult(text="The sky is blue.", tool_calls=[])])
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s1")
+
+    result = await orchestrator.process(state, "Why is the sky blue?")
+
+    assert result.response_text == "The sky is blue."
+    assert result.iterations_used == 1
+    assert any(step.stage == "output" for step in result.trace)
+
+
+@pytest.mark.asyncio
+async def test_single_tool_call_then_final_answer():
+    llm = ScriptedLLMProvider(
+        [
+            GenerationResult(
+                text=None,
+                tool_calls=[ToolCallRequest(id="c1", name="calculator", arguments={"expression": "17*2"})],
+            ),
+            GenerationResult(text="17 times 2 is 34.", tool_calls=[]),
+        ]
+    )
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s2")
+
+    result = await orchestrator.process(state, "What is 17 times 2?")
+
+    assert result.response_text == "17 times 2 is 34."
+    assert result.iterations_used == 2
+    stages = [step.stage for step in result.trace]
+    assert "tool_selected" in stages
+    assert "tool_result" in stages
+
+
+@pytest.mark.asyncio
+async def test_iteration_limit_is_enforced():
+    # Model keeps requesting tool calls forever -- orchestrator must stop.
+    infinite_tool_call = GenerationResult(
+        text=None,
+        tool_calls=[ToolCallRequest(id="cX", name="calculator", arguments={"expression": "1+1"})],
+    )
+    llm = ScriptedLLMProvider([infinite_tool_call] * 10)
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=3)
+    state = ConversationState(session_id="s3")
+
+    result = await orchestrator.process(state, "loop forever")
+
+    assert result.iterations_used == 3
+    assert any(step.stage == "limit_reached" for step in result.trace)
+
+
+@pytest.mark.asyncio
+async def test_disallowed_tool_name_is_rejected_without_executing():
+    llm = ScriptedLLMProvider(
+        [
+            GenerationResult(
+                text=None,
+                tool_calls=[ToolCallRequest(id="c1", name="delete_all_files", arguments={})],
+            ),
+            GenerationResult(text="I can't do that.", tool_calls=[]),
+        ]
+    )
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s4")
+
+    result = await orchestrator.process(state, "delete everything")
+
+    stages = [step.stage for step in result.trace]
+    assert "tool_denied" in stages
+    assert result.response_text == "I can't do that."
+
+
+@pytest.mark.asyncio
+async def test_auth_error_gives_a_distinct_configuration_message():
+    llm = FailingLLMProvider(LLMAuthenticationError("credentials rejected"))
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s5")
+
+    result = await orchestrator.process(state, "What time is it in Tokyo?")
+
+    assert "credentials" in result.response_text
+    # The message says this is not something retrying will fix; it must not tell the user to try again.
+    assert "try again" not in result.response_text.lower()
+    assert any(step.stage == "error" for step in result.trace)
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_error_gives_a_distinct_retry_message():
+    llm = FailingLLMProvider(LLMRateLimitError("rate limited"))
+    orchestrator = AgentOrchestrator(llm, build_default_registry(), max_iterations=8)
+    state = ConversationState(session_id="s6")
+
+    result = await orchestrator.process(state, "What time is it in Tokyo?")
+
+    assert "rate-limiting" in result.response_text
+    assert any(step.stage == "error" for step in result.trace)

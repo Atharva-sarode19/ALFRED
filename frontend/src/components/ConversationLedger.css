@@ -1,0 +1,73 @@
+.ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alfred-space-3);
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.ledger--empty {
+  color: var(--alfred-ink-faint);
+  font-size: 0.9rem;
+  max-width: var(--alfred-max-line);
+}
+
+.ledger__entry {
+  display: grid;
+  grid-template-columns: 2.4em 1fr;
+  gap: var(--alfred-space-2);
+}
+
+.ledger__index {
+  font-family: var(--alfred-font-ui);
+  font-size: 0.72rem;
+  color: var(--alfred-ink-faint);
+  padding-top: 3px;
+}
+
+.ledger__body {
+  border-left: 1px solid var(--alfred-hairline);
+  padding-left: var(--alfred-space-2);
+}
+
+.ledger__role {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--alfred-brass);
+}
+
+.ledger__entry--alfred .ledger__role {
+  color: var(--alfred-verdigris);
+}
+
+.ledger__entry--system .ledger__role {
+  color: var(--alfred-error);
+}
+
+.ledger__text {
+  margin: 2px 0 0;
+  max-width: var(--alfred-max-line);
+  line-height: 1.5;
+}
+
+.ledger__text > :first-child {
+  margin-top: 0;
+}
+
+.ledger__text > :last-child {
+  margin-bottom: 0;
+}
+
+.ledger__text ul,
+.ledger__text ol {
+  padding-left: 1.4em;
+}
+
+.ledger__text pre {
+  overflow-x: auto;
+  padding: var(--alfred-space-2);
+  background: var(--alfred-surface);
+}
