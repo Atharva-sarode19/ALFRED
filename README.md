@@ -1,256 +1,217 @@
 # ALFRED
 
-**Adaptive Language Framework for Reasoning, Execution & Dialogue**
+### Adaptive Language Framework for Reasoning, Execution & Dialogue
 
-> "Your intelligent interface to the digital world."
+**"Your intelligent interface to the digital world."**
 
-An agentic AI assistant: understands a request, decides whether a tool is
-needed, makes a structured tool call through Google Gemini's function
-calling, checks permissions, executes the tool, observes the result, and
-either calls another tool or produces a final answer.
+## About
 
-This README currently documents **Phase 1** only (Core agent: FastAPI +
-Gemini abstraction + tool registry + calculator + datetime). It will grow
-with each milestone (see `PHASE_1.md` for a detailed walkthrough of what
-was built and why).
+ALFRED is an AI-powered voice assistant that I built with the idea of having my own personal AI assistant. It is inspired by fictional assistants like Alfred from Batman and JARVIS from Iron Man.
 
-## Status
+The main idea behind ALFRED is to make an assistant that can do more than just answer questions. It can understand what the user asks, decide what needs to be done, use different tools, and provide a response through text or voice.
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | Core agent, Gemini abstraction, tool registry, calculator, datetime | ✅ done |
-| 2 | Voice (STT/TTS, voice UI) | ✅ done |
-| 3 | Real tools (web search, weather, notes, reminders, files) | ✅ done |
-| 4 | Memory (PostgreSQL, short/long-term, task memory) | not started |
-| 5 | Agentic workflows (multi-step chaining, confirmations, traces) | partially done (confirmations, bounded loops, traces) |
-| 6 | Mobile | not started |
-| 7 | Advanced (vision, computer-use) | not started |
-| 0.3.0 | Enlarged orb with drag-to-rotate, "Shall I go ahead, Sir?" | ✅ done |
+ALFRED uses Google Gemini as its AI model and has a separate backend and frontend to handle its different functions.
 
-## Architecture (Phase 1 + 2)
+## Features
+
+**AI Assistant**
+- Answers questions using Google Gemini.
+- Understands user requests and follow-up questions.
+- Maintains conversation context.
+- Selects tools based on what the user asks.
+- Handles tasks that require multiple steps.
+
+**Voice Interaction**
+- Speech-to-Text using Faster-Whisper.
+- Text-to-Speech for spoken responses.
+- Microphone input and audio playback.
+- Voice interaction through the interface.
+
+**Tools**
+- Web search using DuckDuckGo.
+- Weather information using Open-Meteo.
+- Calculator for mathematical operations.
+- Date and time information.
+- Create, search, retrieve, and delete notes.
+- Create, list, and delete reminders.
+- Search uploaded files.
+- Read and analyse PDF, DOCX, and TXT documents.
+
+**Other Features**
+- Agent activity panel to show what ALFRED is doing.
+- Tool calling using Gemini.
+- Permission checks before tool execution.
+- Multi-step task handling.
+- SQLite storage for notes, reminders, and document information.
+- Interactive animated orb that rotates with cursor movement.
+
+## How It Works
+
+ALFRED uses Google Gemini to understand the user's request and decide what to do next.
+
+For example, if someone asks ALFRED to search for something, it selects the web search tool, gets the results, and uses them to prepare an answer.
+
+The basic process looks like this:
 
 ```text
-Mic (browser)                             POST /api/chat
-      |                                          |
-POST /api/voice/transcribe               AgentOrchestrator  --------------------+
-      |                                          |                              |
-STTProvider (abstract)                   LLMProvider (abstract)                |
-      |                                          |                              |
-WhisperSTTProvider (faster-whisper)      GeminiProvider ---> Google Gemini API  |
-                                                  |                              |
-                                          ToolRegistry  <------------------------+
-                                                  |
-                                          calculator / datetime
-
-Alfred's reply
-      |
-POST /api/voice/synthesize
-      |
-TTSProvider (abstract)
-      |
-ElevenLabsTTSProvider (ElevenLabs SDK) ---> audio bytes ---> browser playback
+       User
+        |
+        v
+   Voice / Text
+        |
+        v
+  ALFRED Backend
+        |
+        v
+ Agent Orchestrator
+        |
+        v
+    Gemini API
+        |
+        v
+   Tool Selection
+        |
+        v
+  Tool Execution
+        |
+        v
+   Tool Results
+        |
+        v
+ Final Response
+        |
+        v
+   Voice / Text
 ```
 
-- `app/services/llm.py` — the `LLMProvider` abstraction the agent depends on.
-- `app/services/gemini.py` — the only file that imports the Gemini SDK.
-- `app/services/stt.py` / `whisper_stt.py` — `STTProvider` abstraction and the
-  local Whisper (`faster-whisper`) implementation.
-- `app/services/tts.py` / `elevenlabs_tts_provider.py` — `TTSProvider`
-  abstraction and the ElevenLabs implementation.
-- `app/agent/orchestrator.py` — the tool-calling loop, iteration bound,
-  permission checks, and safe execution trace.
-- `app/tools/` — `BaseTool`, `ToolRegistry`, and the calculator/datetime tools.
-- `app/api/chat.py` — `POST /api/chat`.
-- `app/api/voice.py` — `POST /api/voice/transcribe`, `POST /api/voice/synthesize`.
-- `frontend/` — the voice UI (see below).
-- Phase 3 (see `docs/PHASE_3.md`): `app/tools/{web_search,weather,notes,reminders,file_search,document_analyzer}.py`,
-  `app/database/sqlite_store.py`, `app/services/{documents,search,ddg_search}.py`,
-  `app/security/untrusted.py`, `app/api/{files,reminders,deps}.py`, and `POST /api/chat/confirm`.
+If a request needs more than one tool, ALFRED can use multiple steps before giving the final answer.
 
-## Requirements
+## Technologies Used
 
-- Python 3.11+
-- Node.js 18+ (for the frontend)
-- A Gemini API key (https://ai.google.dev/)
-- A browser that supports `MediaRecorder` (all evergreen browsers do) for
-  the voice UI; a microphone
-
-## Setup
-
-```bash
-cd alfred/backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-cp ../.env.example .env   # then fill in GEMINI_API_KEY and GEMINI_MODEL
-```
-
-`.env` must set at least:
-
-```env
-GEMINI_API_KEY=your_key_here
-GEMINI_MODEL=gemini-2.0-flash   # or whichever current Gemini model you have access to
-```
-
-Whisper tuning uses sensible defaults. Speech synthesis requires an ElevenLabs API key and voice ID:
-
-```env
-WHISPER_MODEL_SIZE=base          # tiny | base | small | medium | large-v3
-WHISPER_COMPUTE_TYPE=int8        # int8 (CPU) | float16 (GPU) | float32
-WHISPER_LANGUAGE=en              # ISO-639-1 code; blank enables auto-detect (less reliable on short clips)
-WHISPER_INITIAL_PROMPT=The user's name is Atharva. This is a conversation with an AI assistant called ALFRED.
-ELEVENLABS_API_KEY=your_key_here
-ELEVENLABS_VOICE_ID=your_voice_id_here
-```
-
-## Run the backend
-
-```bash
-cd alfred/backend
-uvicorn app.main:app --reload --port 8000
-```
-
-Then:
-
-```bash
-curl http://localhost:8000/api/health
-
-curl http://localhost:8000/api/tools
-
-curl -X POST http://localhost:8000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is 17% of 84000?"}'
-
-curl -X POST http://localhost:8000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What time is it in Tokyo?"}'
-
-# Phase 2: voice endpoints
-curl -X POST http://localhost:8000/api/voice/transcribe \
-  -F "audio=@/path/to/a/short/recording.wav"
-
-curl -X POST http://localhost:8000/api/voice/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Good evening."}' --output reply.mp3
-```
-
-The first call to `/api/voice/transcribe` will download the Whisper model
-(size set by `WHISPER_MODEL_SIZE`) the first time it runs — expect a pause
-on that first request.
-
-## Run the frontend
-
-```bash
-cd alfred/frontend
-npm install
-cp .env.example .env    # defaults to http://localhost:8000, edit if needed
-npm run dev
-```
-
-Open the printed local URL (default `http://localhost:3000`). With the
-backend running on port 8000, you should be able to:
-
-1. Press the dial to start recording (your browser will ask for
-   microphone permission the first time).
-2. Press it again to stop — ALFRED transcribes what you said, adds it to
-   the ledger, sends it to the agent, and speaks the reply back.
-3. Expand "Agent activity" at the bottom to see the safe status trace
-   (tool selected, tool result, etc. — never the model's private reasoning).
-4. Use the text field at the bottom instead of the mic at any time.
-
-### Orb controls (0.3.0)
-
-| Input | Action |
+| Component | Technology |
 |---|---|
-| Mouse / trackpad | Click the orb = talk, drag the orb = rotate it (automatic spin pauses while you hold it), wheel = resize |
-| Keyboard | Arrows rotate, `+` / `-` resize, `P` pause, `0` reset, `Esc` cancel (stops listening, speaking or waiting; declines a pending action) |
+| Backend | Python, FastAPI |
+| Frontend | React, TypeScript |
+| AI Model | Google Gemini API |
+| Speech-to-Text | Faster-Whisper |
+| Text-to-Speech | TTS integration |
+| Database | SQLite |
+| Web Search | DuckDuckGo |
+| Weather | Open-Meteo |
+| Version Control | Git, GitHub |
 
-When an action needs approval, ALFRED says "Shall I go ahead, Sir?" and listens
-for "yes", "go ahead", "no", "cancel" and similar. Cancelling is always possible; nothing but your spoken or clicked answer approves.
+## Main Components
 
-## Tools (Phase 3)
+- **Agent Orchestrator:** Handles user requests and manages the steps needed to complete them.
+- **Gemini Integration:** Helps ALFRED understand requests and decide which tools to use.
+- **Tool Registry:** Keeps all available tools organised.
+- **Voice System:** Handles voice input and spoken responses.
+- **Database:** Stores information used by notes, reminders, and document features.
+- **Frontend:** Provides the interface for interacting with ALFRED.
 
-| Tool | What it does | Permission |
-|---|---|---|
-| `calculator` | Safe arithmetic (AST parser, never `eval`) | LOW |
-| `datetime` | Current time, timezone conversion, date math | LOW |
-| `web_search` | Web search via DuckDuckGo (`ddgs`): titles, URLs, snippets | LOW |
-| `weather` | Current conditions and forecast via Open-Meteo (no key) | LOW |
-| `notes` | create / get / search / delete | get, search LOW; create MEDIUM; delete HIGH |
-| `reminders` | create / list / delete (stored in UTC, shown in your timezone) | list LOW; create, delete MEDIUM |
-| `file_search` | Find uploaded documents by name and content (SQLite FTS5) | LOW |
-| `document_analyzer` | Read an uploaded PDF/DOCX/TXT in pages, or fetch passages for a topic | LOW |
+## Example Commands
 
-Permissions are checked per action. HIGH actions always ask first; MEDIUM
-actions ask unless `REQUIRE_MEDIUM_CONFIRMATION=false`. When the agent needs a
-yes or no it pauses, the UI shows the exact call, and `POST /api/chat/confirm`
-runs (or declines) that stored call. The client cannot pre-approve anything.
+Here are a few examples of what you can ask ALFRED:
 
-Documents: upload from the Workspace panel in the history sheet, or
-`POST /api/files/upload` (PDF, DOCX, TXT). Then ask, for example, "summarize the
-file I just uploaded". Scanned or image-only PDFs have no text layer and are rejected.
+| You can ask | ALFRED can |
+|---|---|
+| What is 25 × 42? | Calculate the answer |
+| Search for recent AI news. | Search the web |
+| What's the weather in Pune? | Get weather information |
+| What time is it in Tokyo? | Get the current time |
+| Create a note about my project. | Save a note |
+| Show my reminders. | Retrieve reminders |
+| Find my project report. | Search uploaded files |
+| Summarise this PDF. | Analyse the document |
 
-Set `DEFAULT_TIMEZONE` (for example `Asia/Kolkata`) so "tomorrow at 9am" means your 9am.
+## Project Structure
 
-Known limits: `web_search` returns snippets only (no page fetching yet); the
-DuckDuckGo backend is an unofficial scraper that can be rate-limited
-(`SearchProvider` is the seam for swapping in another engine); reminders are
-stored and listed but nothing notifies you when one comes due; there is no
-authentication yet, so keep the server on localhost.
+ALFRED has two main parts: the backend, which handles the main functionality, and the frontend, which provides the user interface.
 
-## Tests
-
-Both the agent/tool tests and the new voice-route tests mock their
-respective providers — no real Gemini key, no Whisper model download, and
-no network access are required to run them.
-
-```bash
-cd alfred/backend
-pytest
-
-cd ../frontend
-npm test          # orb controller and drag, silence detector, audio level (Node 22+)
+```text
+ALFRED/
+│
+├── backend/
+│   ├── app/
+│   │   ├── agent/
+│   │   ├── tools/
+│   │   ├── services/
+│   │   ├── database/
+│   │   ├── api/
+│   │   └── security/
+│   │
+│   └── tests/
+│
+├── frontend/
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── services/
+│       └── hooks/
+│
+├── .env.example
+├── .gitignore
+└── README.md
 ```
 
-## Environment variables
+## Getting Started
 
-See `.env.example` at the repo root. `GEMINI_API_KEY` and `GEMINI_MODEL`
-are required; `MAX_AGENT_ITERATIONS` bounds tool-call loops (default 8);
-`WHISPER_MODEL_SIZE`/`WHISPER_COMPUTE_TYPE`/`WHISPER_LANGUAGE`/`WHISPER_INITIAL_PROMPT` tune
-transcription; `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` configure speech synthesis;
-`DEFAULT_TIMEZONE`, `REQUIRE_MEDIUM_CONFIRMATION`, `ALFRED_DATA_DIR`, `MAX_UPLOAD_MB` and
-`SEARCH_MAX_RESULTS` configure the Phase 3 tools.
+### Requirements
 
-## Frontend design notes
+- Python
+- Node.js and npm
+- Google Gemini API key
+- Git
 
-The voice UI deliberately avoids the neon-hologram JARVIS look. The
-concept is a bespoke instrument panel: warm graphite surfaces, an aged-brass
-accent, and a muted verdigris for "listening" — like a chronometer rather
-than a sci-fi HUD. The mic control is a circular dial with tick marks; the
-conversation history is a numbered ledger (numbering because it's genuinely
-sequential); the agent-activity trace is a collapsible strip, closer to a
-status log than a dashboard widget. See `frontend/src/styles/tokens.css`
-for the full palette/type scale.
+### Environment Setup
 
-## Security notes (Phase 1 to 3)
+Create a `.env` file in the backend and add your Gemini API details.
 
-- The calculator never uses `eval()` — it walks a restricted AST and only
-  allows numeric literals, a fixed operator whitelist, and a handful of
-  safe math functions.
-- Only tools registered in `ToolRegistry` can ever execute (allowlisting);
-  unknown tool names returned by the model are rejected before anything runs.
-- Tool arguments are validated against a Pydantic schema before execution;
-  invalid arguments never reach a tool's `execute()`.
-- The Gemini API key is read from the environment only, never hard-coded,
-  never sent to the frontend.
-- `docs/SECURITY.md` will expand as later phases add real network/file/
-  messaging tools with MEDIUM/HIGH permission levels.
-- Web results and document text are wrapped in untrusted-content markers
-  before the model sees them, and the system prompt tells the model to treat
-  them as data, never instructions. This reduces prompt-injection risk; it
-  cannot eliminate it, which is why side-effecting tools ask for confirmation.
-- Confirmations are server-side state, not a client flag (the old
-  `auto_approve_confirmations` request field was removed).
-- Uploads are validated by size, extension and content signature, stored under
-  generated names, and DOCX files containing XML DTDs are rejected.
+```env
+GEMINI_API_KEY=your_api_key
+GEMINI_MODEL=your_model_name
+```
+
+Keep your API key private. Do not upload your `.env` file to GitHub.
+
+Install the required dependencies in the backend and frontend, then follow the setup instructions in the repository to run ALFRED.
+
+## Security
+
+ALFRED includes a permission system to control how tools are used.
+
+- Checks tool inputs before execution.
+- Requires confirmation for sensitive actions.
+- Keeps API keys in environment variables.
+- Treats external information as untrusted content.
+- Does not allow unrestricted system command execution.
+- Shows activity status without exposing the model's private reasoning.
+
+## Future Scope
+
+Some areas where ALFRED can be expanded include:
+
+- Better memory and conversation handling.
+- More tools and integrations.
+- Android and iOS applications.
+- Image and vision capabilities.
+- Computer interaction with user approval.
+- More task automation features.
+
+## Project Details
+
+**Project Name:** ALFRED
+
+**Full Form:** Adaptive Language Framework for Reasoning, Execution & Dialogue
+
+**AI Model:** Google Gemini
+
+**Backend:** Python and FastAPI
+
+**Frontend:** React and TypeScript
+
+**GitHub:** [Atharva-sarode19/ALFRED](https://github.com/Atharva-sarode19/ALFRED)
+
+---
+
+**ALFRED — Your intelligent interface to the digital world.**
