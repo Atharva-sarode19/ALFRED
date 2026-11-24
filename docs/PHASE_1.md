@@ -1,14 +1,16 @@
-# ALFRED — Phase 1
+# ALFRED — Phase 1: Core AI Agent
 
-## Core AI Agent
+Phase 1 was where I started building the actual foundation of **ALFRED (Adaptive Language Framework for Reasoning, Execution & Dialogue)**.
 
-Phase 1 is the foundation of ALFRED.
+The idea was to understand how an AI agent works beyond simply sending a prompt to an AI model and getting a response.
 
-The goal was to build a basic AI agent that can understand a request, decide whether a tool is needed, use that tool, and return a response.
+I wanted ALFRED to understand a user's request, decide whether it needed a tool, execute that tool when required and then use the result to generate a proper response.
+
+This phase was mainly about getting the core agent architecture working.
 
 ---
 
-## 🎯 What I Built
+##  What I Built
 
 Phase 1 includes:
 
@@ -27,7 +29,9 @@ Phase 1 includes:
 
 ---
 
-## 🧠 How It Works
+##  How It Works
+
+The basic idea is that ALFRED doesn't need to use a tool for every request. Gemini first decides whether a tool is required.
 
 ```text
 User Request
@@ -40,20 +44,20 @@ Gemini
      ↓
 Tool Needed?
    ↙       ↘
- No        Yes
- ↓          ↓
+ No         Yes
+ ↓           ↓
 Answer    Tool Registry
-             ↓
+              ↓
           Execute Tool
-             ↓
+              ↓
           Tool Result
-             ↓
-           Gemini
-             ↓
-          Response
+              ↓
+            Gemini
+              ↓
+           Response
 ```
 
-Example:
+**Example:**
 
 ```text
 User:
@@ -61,7 +65,7 @@ What is 25 × 48?
 
         ↓
 
-Gemini decides that a calculator is needed
+Gemini decides a calculator is needed
 
         ↓
 
@@ -77,33 +81,35 @@ ALFRED:
 "The answer is 1200."
 ```
 
+This was one of the main things I wanted to get working: the model should be able to decide when to use a tool instead of relying on the LLM for everything.
+
 ---
 
-## 🛠️ Main Components
+##  Main Components
 
 ### Agent Orchestrator
 
-Controls the agent loop and manages communication between the AI model and tools.
+This is basically the main controller of ALFRED. It manages the agent loop and handles communication between Gemini and the available tools.
 
 ### Gemini Provider
 
-Handles communication with Google Gemini.
+Handles communication with Google's Gemini API. I also kept the LLM provider separate so that another model provider can be integrated in the future without rewriting the entire agent.
 
 ### Tool Registry
 
-Keeps track of the tools ALFRED is allowed to use.
+Keeps track of the tools ALFRED has access to and manages how they are called.
 
 ### Calculator
 
-Performs mathematical calculations without using unrestricted `eval()`.
+Handles mathematical calculations without relying on unrestricted `eval()`.
 
 ### Date/Time Tool
 
-Provides date and time information when required.
+Provides date and time information whenever the agent needs it.
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```text
 backend/
@@ -123,160 +129,146 @@ backend/
 
 ---
 
-# 🧩 Problems I Faced
+##  Problems I Faced
 
-Building Phase 1 was not completely straightforward. These problems helped me understand how real AI applications work.
+Getting the basic agent working took some trial and error. I ran into a few issues while setting things up and testing the complete flow.
 
 ### 1. FastAPI 500 Internal Server Error
 
-At one point, requests to:
+While testing the chat endpoint:
 
 ```text
 POST /api/chat
 ```
 
-returned:
+I encountered:
 
 ```text
 500 Internal Server Error
 ```
 
-The FastAPI server was running, but something inside the AI request flow was failing.
+The server was running, but something inside the request flow was failing.
 
-I had to trace the request through the API, orchestrator, and Gemini provider to identify the problem.
+I had to trace how the request moved through FastAPI, the orchestrator and the Gemini provider to understand where things were going wrong.
 
----
+### 2. Gemini 503 UNAVAILABLE Error
 
-### 2. Gemini 503 Error
-
-Gemini sometimes returned:
+At times, Gemini returned:
 
 ```text
 503 UNAVAILABLE
 ```
 
-because the model was temporarily experiencing high demand.
+This happened when the model was temporarily unavailable due to high demand.
 
-This showed me that even if my application is working correctly, external AI services can still become temporarily unavailable.
+It was a useful reminder that even if the code is correct, an application can still depend on external services that aren't always available.
 
----
+### 3. Gemini Function-Calling Issues
 
-### 3. Gemini Function-Calling Error
+I also ran into an issue involving missing thought signatures during Gemini function-calling requests.
 
-I also encountered an error related to Gemini function calling and missing thought signatures.
+This was while working on the interaction between the model and the tools.
 
-This happened while working with the model's tool-calling flow.
+It helped me understand that tool calling isn't just about executing a function. The agent also needs to maintain the correct information throughout the interaction.
 
-It helped me understand that an AI agent has to correctly maintain information between:
+The flow looks something like this:
 
 ```text
-AI Response
-     ↓
-Tool Call
-     ↓
-Tool Result
-     ↓
-AI Response
+Gemini Response
+      ↓
+   Tool Call
+      ↓
+  Tool Execution
+      ↓
+  Tool Result
+      ↓
+Gemini Response
 ```
-
----
 
 ### 4. Python Virtual Environment Issue
 
-While setting up the project, activating the virtual environment in PowerShell initially caused an execution-policy error.
+During the initial setup, I faced a PowerShell execution-policy error when trying to activate the Python virtual environment.
 
-I had to resolve the environment configuration before continuing development.
-
----
+I had to sort out the environment configuration before I could continue running the backend.
 
 ### 5. Understanding the Agent Loop
 
-One of the biggest challenges was understanding how all the components should communicate.
+This was probably one of the biggest learning curves in Phase 1.
 
-The final flow became:
+Initially, understanding how the LLM, orchestrator and tools should work together took some time.
 
-```text
-User
- ↓
-LLM
- ↓
-Tool Decision
- ↓
-Tool
- ↓
-Tool Result
- ↓
-LLM
- ↓
-Final Response
-```
+I had to understand how the model decides to call a tool, how the tool result is passed back and how the model generates the final response.
 
-Understanding this flow was one of the most important parts of building Phase 1.
+Once I understood this flow, the overall architecture started making much more sense.
 
 ---
 
-## 📚 What I Learned
+##  What I Learned
 
-Through Phase 1, I learned about:
+While building Phase 1, I got hands-on experience with:
 
-- LLM APIs
+- Working with LLM APIs
 - Gemini function calling
 - AI agent architecture
-- Tool-based agents
-- FastAPI backends
-- Modular Python projects
+- Tool-based AI agents
+- FastAPI and backend development
+- Modular Python project structure
 - API error handling
-- Agent loops
-- Tool validation
-- Testing AI systems
+- Multi-step agent execution
+- Tool validation and permissions
+- Writing automated tests
 - Debugging AI applications
 
----
-
-## 📌 Phase 1 Status
-
-```text
-FastAPI Backend       ✅
-Gemini Integration    ✅
-LLM Abstraction       ✅
-Agent Orchestrator    ✅
-Tool Registry         ✅
-Calculator            ✅
-Date/Time Tool        ✅
-Function Calling      ✅
-Agent Loop            ✅
-Basic Testing         ✅
-```
+More importantly, I started understanding the difference between a normal chatbot and an AI agent that can actually use tools.
 
 ---
 
-## 🚀 Next Phase
+##  Phase 1 Status
 
-The next phase will focus on **voice interaction**.
+| Component | Status |
+|---|---|
+| FastAPI Backend | Completed |
+| Gemini Integration | Completed |
+| LLM Provider Abstraction | Completed |
+| Agent Orchestrator | Completed |
+| Tool Registry | Completed |
+| Calculator | Completed |
+| Date/Time Tool | Completed |
+| Function Calling | Completed |
+| Agent Loop | Completed |
+| Basic Testing | Completed |
 
-Planned features include:
+---
+
+##  What's Next?
+
+**Phase 2 — Voice Interaction**
+
+After getting the core agent working, the next step was to give ALFRED a voice.
+
+Planned features included:
 
 - Speech-to-Text
 - Text-to-Speech
 - Voice UI
 - Conversation history
-- Microphone state
+- Microphone state management
 - Audio playback
 
 ---
 
-## 🎯 Phase 1 Goal
+##  What Phase 1 Meant for ALFRED
 
-Phase 1 establishes the foundation for the rest of ALFRED.
+The goal of this phase wasn't to build the complete assistant straight away. It was to get the core working properly so that future features could be added without rebuilding everything from scratch.
 
-The goal was not to build the final assistant immediately, but to create a solid core that future features can build upon.
+Building this phase gave me a much better understanding of how AI agents work behind the scenes.
 
 > **Phase 1: Build the brain before giving ALFRED a voice.**
 
 ---
 
-## ALFRED
+**ALFRED**
 
 **Adaptive Language Framework for Reasoning, Execution & Dialogue**
 
-> **Understand. Reason. Act.**
+> Understand. Reason. Act.
