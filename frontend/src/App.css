@@ -1,0 +1,211 @@
+.app-shell {
+  grid-template-columns: minmax(0, 1fr); /* keeps the single column at the container width so centred items stay centred */
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--alfred-space-4) + env(safe-area-inset-top, 0px)) var(--alfred-space-4) var(--alfred-space-3);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+
+.app-shell__brand {
+  margin: 0;
+  color: var(--alfred-ink);
+}
+.app-shell__brand span {
+  color: var(--alfred-ink-faint);
+}
+
+.app-shell__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--alfred-space-3);
+}
+
+.app-shell__clock {
+  margin: 0;
+  color: var(--alfred-ink-faint);
+  font-size: 12px;
+}
+
+.app-shell__stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--alfred-space-2);
+  padding: 0 var(--alfred-space-4);
+  min-height: 0;
+}
+
+.app-shell__state-label {
+  margin: var(--alfred-space-3) 0 0;
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  color: var(--alfred-ink);
+}
+
+.app-shell__sub-label {
+  margin: 0;
+  font-size: 11px;
+  color: var(--alfred-ink-faint);
+  text-align: center;
+  min-height: 14px;
+}
+
+.app-shell__sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60%;
+  background: var(--alfred-surface);
+  border-top: 1px solid var(--alfred-hairline);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alfred-space-3);
+  padding: var(--alfred-space-3) var(--alfred-space-4) calc(var(--alfred-space-3) + env(safe-area-inset-bottom, 0px));
+  /* room for the control bar, which floats over the sheet's bottom edge */
+  padding-bottom: calc(var(--alfred-space-3) + 64px + env(safe-area-inset-bottom, 0px));
+  z-index: 3;
+  transform: translateY(100%);
+  visibility: hidden; /* a closed sheet is not focusable */
+  transition: transform 0.28s ease, visibility 0s linear 0.28s;
+}
+.app-shell__sheet--open {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform 0.28s ease, visibility 0s;
+}
+
+.app-shell__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.app-shell__sheet-close {
+  position: absolute;
+  top: var(--alfred-space-2);
+  right: var(--alfred-space-2);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: var(--alfred-surface-raised);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-sm);
+  color: var(--alfred-ink);
+  cursor: pointer;
+}
+.app-shell__sheet-close:hover {
+  border-color: var(--alfred-ink-faint);
+}
+@media (pointer: coarse) {
+  .app-shell__sheet-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.app-shell__sheet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.confirm-card,
+.error-banner {
+  border: 1px solid var(--alfred-hairline);
+  background: var(--alfred-surface);
+  border-radius: var(--alfred-radius-md);
+  padding: var(--alfred-space-3);
+  font-size: 0.9rem;
+  max-width: 360px;
+}
+
+.error-banner {
+  border-color: var(--alfred-error);
+}
+
+.confirm-card__actions {
+  display: flex;
+  gap: var(--alfred-space-2);
+  margin-top: var(--alfred-space-2);
+}
+
+.confirm-card__actions button,
+.error-banner button {
+  background: var(--alfred-surface-raised);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-sm);
+  padding: var(--alfred-space-1) var(--alfred-space-3);
+  cursor: pointer;
+}
+
+.confirm-card__actions button:first-child {
+  border-color: var(--alfred-ink);
+  color: var(--alfred-ink);
+}
+
+.confirm-card__detail {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--alfred-ink-faint);
+  word-break: break-word;
+}
+
+/* While a confirmation or error card is on screen the orb gives up some height, so the card
+   always ends above the floating control bar instead of running underneath it. */
+.app-shell--prompt .orbital-core {
+  --orb-size: max(120px, min(78vmin, 720px, calc(100vh - 460px)));
+  --orb-size: max(120px, min(78vmin, 720px, calc(100dvh - 460px)));
+}
+.app-shell--prompt .app-shell__stage {
+  padding-bottom: var(--alfred-space-3);
+}
+.confirm-card,
+.error-banner {
+  width: min(360px, 100%);
+  flex: none;
+}
+.confirm-card__detail {
+  max-height: 4.5em;
+  overflow-y: auto;
+}
+.app-shell--prompt .app-shell__stage {
+  justify-content: flex-start;
+  overflow-y: auto; /* very short screens scroll the stage instead of sliding under the bar */
+}
+.app-shell--prompt .app-shell__stage > :first-child {
+  margin-top: auto;
+}
+.app-shell--prompt .app-shell__stage > :last-child {
+  margin-bottom: auto;
+}
+
+@media (max-height: 560px) {
+  .app-shell--prompt .orbital-core {
+    --orb-size: 90px;
+  }
+  .app-shell--prompt .app-shell__sub-label,
+  .app-shell--prompt .confirm-card__detail {
+    display: none;
+  }
+  .app-shell--prompt .confirm-card,
+  .app-shell--prompt .error-banner {
+    padding: var(--alfred-space-2) var(--alfred-space-3);
+  }
+}

@@ -1,0 +1,55 @@
+/*
+  ALFRED design tokens — monochrome.
+
+  Concept: an original wireframe "presence" core (orbital rings + a
+  particle inner cluster), pure black-and-white. No neon, no gradients,
+  no glass-morphism, and — deliberately — no color anywhere except the
+  one desaturated red-grey reserved for the error state, so a failure
+  reads as visually distinct without breaking the monochrome rule.
+
+  Same variable names as before on purpose: ConversationLedger.css and
+  ActivityTrace.css only ever reference var(--alfred-*), so recoloring
+  here recolors the whole app without touching either of those files.
+*/
+
+:root {
+  /* Surfaces */
+  --alfred-bg: #050506;
+  --alfred-surface: #0c0c0e;
+  --alfred-surface-raised: #16171a;
+  --alfred-hairline: #2a2b2e;
+
+  /* Accents (was brass/verdigris — now a single neutral tone) */
+  --alfred-brass: #e7e7ea;
+  --alfred-brass-dim: #8a8a8f;
+  --alfred-verdigris: #b8b8bc;
+  --alfred-error: #b5654f;
+
+  /* Text */
+  --alfred-ink: #e7e7ea;
+  --alfred-ink-muted: #8a8a8f;
+  --alfred-ink-faint: #55565b;
+
+  /* Type — monospace throughout, matching the core's technical feel */
+  --alfred-font-display: "JetBrains Mono", ui-monospace, monospace;
+  --alfred-font-ui: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Layout */
+  --alfred-radius-sm: 3px;
+  --alfred-radius-md: 6px;
+  --alfred-space-1: 4px;
+  --alfred-space-2: 8px;
+  --alfred-space-3: 16px;
+  --alfred-space-4: 24px;
+  --alfred-space-5: 40px;
+
+  --alfred-max-line: 62ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

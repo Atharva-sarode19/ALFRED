@@ -1,0 +1,62 @@
+.control-bar {
+  position: relative;
+  z-index: 5; /* above every panel, so it can always close them */
+  align-self: center;
+  justify-self: center; /* the shell is a grid: without this the bar stretches full width */
+  justify-content: center;
+  width: fit-content;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: calc(var(--alfred-space-3) + env(safe-area-inset-bottom, 0px));
+  max-width: calc(100% - 2 * var(--alfred-space-3));
+  border: 1px solid var(--alfred-hairline);
+  border-radius: 999px;
+  background: rgba(12, 12, 14, 0.85);
+}
+
+.control-bar__btn {
+  position: relative;
+  background: none;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--alfred-ink-faint);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.12s ease;
+}
+.control-bar__btn:hover {
+  color: var(--alfred-ink);
+  background: rgba(255, 255, 255, 0.05);
+}
+.control-bar__btn:active {
+  transform: scale(0.96);
+}
+.control-bar__btn--active {
+  color: var(--alfred-ink);
+  background: var(--alfred-surface-raised);
+}
+
+.control-bar__dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--alfred-ink);
+}
+
+@media (max-width: 420px) {
+  .control-bar__btn {
+    padding: 8px 14px;
+  }
+}
+@media (pointer: coarse) {
+  .control-bar__btn {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
