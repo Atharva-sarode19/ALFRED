@@ -1,0 +1,56 @@
+.text-composer {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(var(--alfred-space-3) + 52px + var(--alfred-space-2) + env(safe-area-inset-bottom, 0px));
+  width: min(520px, calc(100% - 2 * var(--alfred-space-3)));
+  display: flex;
+  gap: var(--alfred-space-2);
+  padding: var(--alfred-space-2);
+  background: var(--alfred-surface);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-md);
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+}
+.text-composer--open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+}
+
+.text-composer input {
+  flex: 1;
+  min-width: 0;
+  background: var(--alfred-surface-raised);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-sm);
+  padding: var(--alfred-space-2) var(--alfred-space-3);
+  color: var(--alfred-ink);
+  font-family: var(--alfred-font-ui);
+  font-size: 16px; /* avoids iOS zoom-on-focus */
+}
+.text-composer input:focus {
+  outline: none;
+  border-color: var(--alfred-ink-faint);
+}
+
+.text-composer button {
+  background: none;
+  border: 1px solid var(--alfred-ink-faint);
+  color: var(--alfred-ink);
+  border-radius: var(--alfred-radius-sm);
+  padding: var(--alfred-space-2) var(--alfred-space-3);
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+.text-composer button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+.text-composer button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

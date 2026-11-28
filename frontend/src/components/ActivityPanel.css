@@ -1,0 +1,172 @@
+.activity {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(var(--alfred-space-3) + 52px + var(--alfred-space-2) + env(safe-area-inset-bottom, 0px));
+  width: min(440px, calc(100% - 2 * var(--alfred-space-3)));
+  max-height: min(55%, 460px);
+  display: flex;
+  flex-direction: column;
+  background: var(--alfred-surface);
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-md);
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  visibility: hidden;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+}
+.activity--open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s;
+}
+
+.activity__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--alfred-space-2) var(--alfred-space-3);
+  border-bottom: 1px solid var(--alfred-hairline);
+}
+.activity__header h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--alfred-ink-muted);
+}
+.activity__header button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: var(--alfred-radius-sm);
+  color: var(--alfred-ink-faint);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.activity__header button:hover {
+  color: var(--alfred-ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.activity__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--alfred-space-2) var(--alfred-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--alfred-space-3);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.activity__item {
+  display: flex;
+  gap: var(--alfred-space-3);
+  align-items: flex-start;
+}
+
+.activity__mark {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--alfred-ink-faint);
+}
+.activity__mark--completed {
+  background: var(--alfred-ink-muted);
+  border-color: var(--alfred-ink-muted);
+}
+.activity__mark--running {
+  border-color: var(--alfred-ink);
+  background: var(--alfred-ink);
+  animation: activity-pulse 1.4s ease-in-out infinite;
+}
+.activity__mark--waiting {
+  border-color: var(--alfred-ink);
+  border-style: dashed;
+}
+.activity__mark--failed {
+  border-color: var(--alfred-error);
+  background: var(--alfred-error);
+}
+@keyframes activity-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.activity__body {
+  min-width: 0;
+  flex: 1;
+}
+.activity__line {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--alfred-space-3);
+  font-size: 12px;
+}
+.activity__name {
+  color: var(--alfred-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity__status {
+  flex: none;
+  color: var(--alfred-ink-faint);
+}
+.activity__detail {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--alfred-ink-faint);
+  word-break: break-word;
+}
+.activity__empty {
+  font-size: 12px;
+  color: var(--alfred-ink-faint);
+}
+
+.activity__actions {
+  display: flex;
+  gap: var(--alfred-space-2);
+  margin-top: var(--alfred-space-2);
+}
+.activity__actions button {
+  background: none;
+  border: 1px solid var(--alfred-hairline);
+  border-radius: var(--alfred-radius-sm);
+  padding: 4px var(--alfred-space-3);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.activity__actions button:first-child {
+  border-color: var(--alfred-ink-muted);
+}
+.activity__actions button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--alfred-ink-faint);
+}
+
+.activity__duration {
+  font-variant-numeric: tabular-nums;
+}
+
+.activity__workflows {
+  flex: 0 1 auto;
+  max-height: 70%;
+  overflow-y: auto;
+  min-height: 0;
+}
+.activity__workflow-error {
+  padding: 0 var(--alfred-space-3) var(--alfred-space-2);
+  color: var(--alfred-error);
+}

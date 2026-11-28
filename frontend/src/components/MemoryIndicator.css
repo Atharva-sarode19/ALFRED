@@ -1,0 +1,42 @@
+.memory-indicator {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--alfred-ink-faint);
+  transition: color 0.4s ease;
+}
+.memory-indicator__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  transition: opacity 0.4s ease;
+}
+.memory-indicator--ready .memory-indicator__dot {
+  opacity: 0.6;
+}
+.memory-indicator--retrieved {
+  color: var(--alfred-ink);
+}
+.memory-indicator--off,
+.memory-indicator--offline {
+  opacity: 0.7;
+}
+.memory-indicator {
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  /* narrow screens: keep just the dot (the label stays available to screen readers and on hover) */
+  .memory-indicator {
+    font-size: 0;
+    gap: 0;
+  }
+  .memory-indicator__dot {
+    width: 5px;
+    height: 5px;
+  }
+}
