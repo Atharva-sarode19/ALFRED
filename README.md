@@ -1,335 +1,220 @@
 # ALFRED
 
-**Adaptive Language Framework for Reasoning, Execution & Dialogue**
+### Adaptive Language Framework for Reasoning, Execution & Dialogue
 
-> "Your intelligent interface to the digital world."
+> **Understand. Reason. Act.**
 
-An agentic AI assistant: understands a request, decides whether a tool is
-needed, makes a structured tool call through Google Gemini's function
-calling, checks permissions, executes the tool, observes the result, and
-either calls another tool or produces a final answer.
+ALFRED is a personal AI assistant that I'm building as a long-term project to explore how AI assistants can go beyond answering questions and actually perform tasks using tools, memory, voice interaction and structured workflows.
 
-Phase 4 adds **persistent memory** in PostgreSQL: ALFRED remembers useful facts,
-preferences and ongoing tasks across conversations and restarts. See
-`docs/PHASE_4.md` for the full design; per-phase notes live in `docs/PHASE_*.md`.
+The project started with a basic AI agent capable of responding to queries and using tools. Since then, I've gradually expanded it by adding voice interaction, real-world tools, persistent memory and an agentic workflow engine.
 
-## Status
+I'm building ALFRED phase-by-phase, improving its capabilities while learning more about AI agents, backend development, voice technologies, memory systems and workflow orchestration along the way.
 
-| Phase | Scope | Status |
+---
+
+## About ALFRED
+
+ALFRED is designed to be a voice-first AI assistant that can understand user requests, interact with tools, retain information and handle tasks that involve multiple steps.
+
+Rather than treating every request as a simple question-and-answer interaction, ALFRED is being developed to handle requests that may require planning, tool usage, information retrieval, task execution and user approval.
+
+The goal is to gradually develop ALFRED into a more capable personal assistant while keeping its architecture modular so that new capabilities can be added without rebuilding the entire system.
+
+---
+
+## Features
+
+### AI Agent
+- LLM-powered responses using Gemini
+- Agent orchestration
+- Function calling
+- Tool registry
+- Multi-step tool interaction
+
+### Voice Interaction
+- Speech-to-Text using Faster-Whisper
+- Text-to-Speech
+- Microphone input
+- Audio playback
+- Voice-based interaction with the agent
+
+### Real-World Tools
+- Web search
+- Weather information
+- Notes and reminders
+- File search
+- Document analysis
+- PDF, DOCX and TXT support
+
+### Persistent Memory
+- Persistent memory across conversations
+- Short-term and long-term memory
+- Task-related memory
+- Context retrieval
+- Conversation management
+
+### Agentic Workflow Engine
+- Task planning and decomposition
+- Multi-step workflow execution
+- Task dependencies
+- Workflow validation
+- Task state tracking
+- Retry and failure handling
+- Workflow continuation and cancellation
+- Human approval checkpoints
+- Persistent workflow storage
+
+### Interface
+- React and TypeScript frontend
+- Voice-first interface
+- Interactive ALFRED orb
+- Agent activity tracking
+- Workflow progress visualization
+- Minimal interface focused on interaction
+
+---
+
+## Development Phases
+
+ALFRED is being developed incrementally, with each phase adding a new set of capabilities.
+
+| Version | Phase | Description |
 |---|---|---|
-| 1 | Core agent, Gemini abstraction, tool registry, calculator, datetime | ✅ done |
-| 2 | Voice (STT/TTS, voice UI) | ✅ done |
-| 3 | Real tools (web search, weather, notes, reminders, files) | ✅ done |
-| 4 | Memory (PostgreSQL, short/long-term, task memory), exact age maths, history-panel fix | ✅ done |
-| 5 | Agentic workflows (planning, dependencies, retries, approvals, persistence, workflow UI) | ✅ done (see `docs/PHASE_5.md`) |
-| 6 | Mobile | not started |
-| 7 | Advanced (vision, computer-use) | not started |
-| 0.3.0 | Enlarged orb with drag-to-rotate, "Shall I go ahead, Sir?" | ✅ done |
+| v0.1.0 | Phase 1 | Core AI Agent |
+| v0.2.0 | Phase 2 | Voice Interaction |
+| v0.3.0 | Phase 3 | Real-World Tools |
+| v0.4.0 | Phase 4 | Persistent Memory System |
+| v0.5.0 | Phase 5 | Agentic Workflow Engine |
 
-## Architecture (Phases 1 to 4)
+### Phase 1 — Core AI Agent
 
-```text
-Mic (browser)                             POST /api/chat
-      |                                          |
-POST /api/voice/transcribe               AgentOrchestrator  --------------------+
-      |                                          |                              |
-STTProvider (abstract)                   LLMProvider (abstract)                |
-      |                                          |                              |
-WhisperSTTProvider (faster-whisper)      GeminiProvider ---> Google Gemini API  |
-                                                  |                              |
-                                          ToolRegistry  <------------------------+
-                                                  |
-                                          calculator / datetime / weather / notes / ...
-                                                  |
-                                          MemoryCoordinator ---> PostgreSQL
-                                          (retrieve before, store after each turn)
+The initial phase focused on building the foundation of ALFRED.
 
-Alfred's reply
-      |
-POST /api/voice/synthesize
-      |
-TTSProvider (abstract)
-      |
-ElevenLabsTTSProvider (ElevenLabs SDK) ---> audio bytes ---> browser playback
-```
+- Gemini integration
+- Agent orchestration
+- Function calling
+- Tool registry
+- Calculator tool
+- Date and time tool
+- FastAPI backend
+- Basic testing
 
-- `app/services/llm.py` — the `LLMProvider` abstraction the agent depends on.
-- `app/services/gemini.py` — the only file that imports the Gemini SDK.
-- `app/services/stt.py` / `whisper_stt.py` — `STTProvider` abstraction and the
-  local Whisper (`faster-whisper`) implementation.
-- `app/services/tts.py` / `elevenlabs_tts_provider.py` — `TTSProvider`
-  abstraction and the ElevenLabs implementation.
-- `app/agent/orchestrator.py` — the tool-calling loop, iteration bound,
-  permission checks, and safe execution trace.
-- `app/tools/` — `BaseTool`, `ToolRegistry`, and the calculator/datetime tools.
-- `app/api/chat.py` — `POST /api/chat`.
-- `app/api/voice.py` — `POST /api/voice/transcribe`, `POST /api/voice/synthesize`.
-- `frontend/` — the voice UI (see below).
-- Phase 3 (see `docs/PHASE_3.md`): `app/tools/{web_search,weather,notes,reminders,file_search,document_analyzer}.py`,
-  `app/database/sqlite_store.py`, `app/services/{documents,search,ddg_search}.py`,
-  `app/security/untrusted.py`, `app/api/{files,reminders,deps}.py`, and `POST /api/chat/confirm`.
+### Phase 2 — Voice Interaction
 
-- Phase 4 (see `docs/PHASE_4.md`): `app/memory/` (memory service, repository, task memory,
-  conversations, short-term window, retrieval, extraction, coordinator), `app/database/postgres.py`
-  and `migrator.py` with `app/database/migrations/`, `app/tools/{memory_tool,tasks_tool,date_math}.py`
-  and `app/api/memory.py`.
+This phase introduced voice-based interaction, allowing ALFRED to listen to requests and respond through speech.
 
-## Requirements
+- Speech-to-Text
+- Text-to-Speech
+- Microphone input
+- Audio playback
+- Voice API endpoints
+- React and TypeScript frontend
+- Conversation history
+- Agent activity trace
 
-- Python 3.12 recommended (3.11 to 3.13 supported). Use a 64-bit python.org install; no C/C++ compiler or
-  Microsoft C++ Build Tools are needed, every dependency installs from a prebuilt wheel.
-- PostgreSQL 13+ (optional: without `DATABASE_URL` ALFRED runs exactly as in Phase 3, without memory)
-- Node.js 18+ (for the frontend)
-- A Gemini API key (https://ai.google.dev/)
-- A browser that supports `MediaRecorder` (all evergreen browsers do) for
-  the voice UI; a microphone
+### Phase 3 — Real-World Tools
 
-## Setup
+The third phase focused on connecting ALFRED to tools that could help it perform useful tasks beyond basic conversations.
 
-Windows (PowerShell), from the project root:
+- Web search
+- Weather tool
+- Notes and reminders
+- File search
+- Document processing
+- PDF, DOCX and TXT support
+- SQLite integration
+- Permission and confirmation handling
+- Frontend integration
 
-```powershell
-cd backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-Copy-Item ..\.env.example .env   # then fill in GEMINI_API_KEY and GEMINI_MODEL
-uvicorn app.main:app --reload --port 8000
-```
+### Phase 4 — Persistent Memory System
 
-In a second terminal: `cd frontend; npm install; Copy-Item .env.example .env; npm run dev`.
+This phase focused on giving ALFRED the ability to retain information beyond individual conversations.
 
-macOS / Linux:
+- PostgreSQL integration
+- Short-term memory
+- Long-term memory
+- Task-related memory
+- Memory retrieval
+- Context integration
+- Conversation management
 
-```bash
-cd alfred/backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+### Phase 5 — Agentic Workflow Engine
 
-cp ../.env.example .env   # then fill in GEMINI_API_KEY and GEMINI_MODEL
-```
+The fifth phase focused on making ALFRED capable of managing tasks that require multiple steps.
 
-Always create the virtual environment with the Python version above (`py -3.12` picks it explicitly on
-Windows). ALFRED refuses to start on Python older than 3.11 and says so.
+Instead of handling a request through individual tool calls alone, ALFRED can create a workflow, break a task into smaller steps, organize them based on dependencies and manage their execution.
 
-### Voice dependency pins (faster-whisper / PyAV)
+- Workflow planning
+- Task decomposition
+- Dependency-based execution
+- Workflow validation
+- Task state tracking
+- Retry and failure handling
+- Workflow continuation and cancellation
+- Human approval checkpoints
+- Persistent workflow storage
+- Workflow execution history
+- Activity tracing
+- Workflow progress visualization
 
-`requirements.txt` pins `faster-whisper>=1.1,<2` and `av>=15.1,<19`. faster-whisper only declares `av>=11`,
-but it calls `av.open(..., metadata_errors="ignore")`, which PyAV 19 removed, so an unconstrained install picks
-PyAV 19 and transcription fails with `TypeError: open() got an unexpected keyword argument 'metadata_errors'`.
-PyAV 15.1 and newer publish prebuilt wheels for Python 3.10 to 3.14 (Windows, macOS, Linux). If you already hit
-the error, run `pip install -r requirements.txt` again inside the venv: that replaces PyAV 19 with 18.x. The
-backend also checks the installed PyAV before loading Whisper and returns this same advice instead of a traceback.
+---
 
-`.env` must set at least:
+## Tech Stack
 
-```env
-GEMINI_API_KEY=your_key_here
-GEMINI_MODEL=gemini-2.0-flash   # or whichever current Gemini model you have access to
-```
-
-Persistent memory needs a PostgreSQL database (setup below):
-
-```env
-DATABASE_URL=postgresql://alfred:your_password@localhost:5432/alfred
-```
-
-Whisper tuning uses sensible defaults. Speech synthesis requires an ElevenLabs API key and voice ID:
-
-```env
-WHISPER_MODEL_SIZE=base          # tiny | base | small | medium | large-v3
-WHISPER_COMPUTE_TYPE=int8        # int8 (CPU) | float16 (GPU) | float32
-WHISPER_LANGUAGE=en              # ISO-639-1 code; blank enables auto-detect (less reliable on short clips)
-WHISPER_INITIAL_PROMPT=The user's name is Atharva. This is a conversation with an AI assistant called ALFRED.
-ELEVENLABS_API_KEY=your_key_here
-ELEVENLABS_VOICE_ID=your_voice_id_here
-```
-
-## PostgreSQL setup (Phase 4)
-
-```bash
-# create a role and database (adjust the password)
-psql -U postgres -c "CREATE ROLE alfred LOGIN PASSWORD 'your_password';"
-psql -U postgres -c "CREATE DATABASE alfred OWNER alfred;"
-
-# put DATABASE_URL in backend/.env, then create the tables
-cd alfred/backend
-python -m app.database.migrator            # apply pending migrations
-python -m app.database.migrator --status   # show applied / pending
-```
-
-The backend also applies pending migrations on startup (`DB_AUTO_MIGRATE=true`). If PostgreSQL is
-unreachable ALFRED still starts and answers; it just works without memory until the database is back.
-
-## Run the backend
-
-```bash
-cd alfred/backend
-uvicorn app.main:app --reload --port 8000
-```
-
-Memory endpoints (`/api/memory`, `/api/tasks`, `/api/conversations`) are listed in `docs/PHASE_4.md`;
-check the database with `curl http://localhost:8000/api/memory/status`.
-
-Then:
-
-```bash
-curl http://localhost:8000/api/health
-
-curl http://localhost:8000/api/tools
-
-curl -X POST http://localhost:8000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is 17% of 84000?"}'
-
-curl -X POST http://localhost:8000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What time is it in Tokyo?"}'
-
-# Phase 2: voice endpoints
-curl -X POST http://localhost:8000/api/voice/transcribe \
-  -F "audio=@/path/to/a/short/recording.wav"
-
-curl -X POST http://localhost:8000/api/voice/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Good evening."}' --output reply.mp3
-```
-
-The first call to `/api/voice/transcribe` will download the Whisper model
-(size set by `WHISPER_MODEL_SIZE`) the first time it runs — expect a pause
-on that first request.
-
-## Run the frontend
-
-```bash
-cd alfred/frontend
-npm install
-cp .env.example .env    # defaults to http://localhost:8000, edit if needed
-npm run dev
-```
-
-Open the printed local URL (default `http://localhost:3000`). With the
-backend running on port 8000, you should be able to:
-
-1. Press the dial to start recording (your browser will ask for
-   microphone permission the first time).
-2. Press it again to stop — ALFRED transcribes what you said, adds it to
-   the ledger, sends it to the agent, and speaks the reply back.
-3. Expand "Agent activity" at the bottom to see the safe status trace
-   (tool selected, tool result, etc. — never the model's private reasoning).
-4. Use the text field at the bottom instead of the mic at any time.
-
-### Orb controls (0.3.0)
-
-| Input | Action |
+| Component | Technology |
 |---|---|
-| Mouse / trackpad | Click the orb = talk, drag the orb = rotate it (automatic spin pauses while you hold it), wheel = resize |
-| Keyboard | Arrows rotate, `+` / `-` resize, `P` pause, `0` reset, `Esc` cancel (stops listening, speaking or waiting; declines a pending action) |
+| Backend | Python, FastAPI |
+| Frontend | React, TypeScript |
+| AI Model | Google Gemini |
+| Speech-to-Text | Faster-Whisper |
+| Text-to-Speech | Edge TTS / configured TTS provider |
+| Database | PostgreSQL |
+| Additional Storage | SQLite |
+| Agent Architecture | Agent Orchestration, Function Calling, Tool Registry |
 
-When an action needs approval, ALFRED says "Shall I go ahead, Sir?" and listens
-for "yes", "go ahead", "no", "cancel" and similar. Cancelling is always possible; nothing but your spoken or clicked answer approves.
+---
 
-## Workflows (Phase 5)
+## Project Structure
 
-Complex requests ("research three frameworks, compare them and summarise") run as structured workflows:
-the model plans a dependency graph of tasks, the engine validates it, runs each task through the existing
-agent loop and tool registry, tracks every state change in PostgreSQL, retries transient failures within a
-limit, blocks tasks whose prerequisites failed, and pauses at any action that needs approval. Ask in chat
-(the agent uses the `workflow` tool) or `POST /api/workflows`. Progress, approvals, cancel/continue and an
-execution trace appear at the top of the Activity panel. Details, API and limits: `docs/PHASE_5.md`.
+ALFRED is divided into a backend and frontend to keep the agent logic separate from the user interface.
 
-## Tools (Phase 3)
+- **Backend:** Handles the agent, tool execution, memory, workflows, API endpoints and integrations.
+- **Frontend:** Handles the interface, voice interaction, activity tracking and workflow visualization.
+- **Database:** Stores persistent information required by ALFRED's memory and workflow systems.
 
-| Tool | What it does | Permission |
-|---|---|---|
-| `calculator` | Safe arithmetic (AST parser, never `eval`) | LOW |
-| `datetime` | Current time, timezone conversion, date math, exact age and next birthday (`age`) | LOW |
-| `web_search` | Web search via DuckDuckGo (`ddgs`): titles, URLs, snippets | LOW |
-| `weather` | Current conditions and forecast via Open-Meteo (no key) | LOW |
-| `notes` | create / get / search / delete | get, search LOW; create MEDIUM; delete HIGH |
-| `reminders` | create / list / delete (stored in UTC, shown in your timezone) | list LOW; create, delete MEDIUM |
-| `file_search` | Find uploaded documents by name and content (SQLite FTS5) | LOW |
-| `memory` | save / search / list / forget long-term memories (Phase 4, needs PostgreSQL) | forget HIGH; others LOW |
-| `tasks` | create / update / add_note / get / list / search / delete tracked tasks (Phase 4) | delete HIGH; others LOW |
-| `document_analyzer` | Read an uploaded PDF/DOCX/TXT in pages, or fetch passages for a topic | LOW |
-| `workflow` | start / status / result / resume / cancel a multi-step workflow (Phase 5); no approve action exists | LOW (each task's own tools keep their permissions) |
+---
 
-Permissions are checked per action. HIGH actions always ask first; MEDIUM
-actions ask unless `REQUIRE_MEDIUM_CONFIRMATION=false`. When the agent needs a
-yes or no it pauses, the UI shows the exact call, and `POST /api/chat/confirm`
-runs (or declines) that stored call. The client cannot pre-approve anything.
+## What's Next?
 
-Documents: upload from the Workspace panel in the history sheet, or
-`POST /api/files/upload` (PDF, DOCX, TXT). Remove one with the small x beside it in the Workspace panel, or
-`DELETE /api/files/{id}` (deletes the stored file, its text and its search index). Then ask, for example, "summarize the
-file I just uploaded". Scanned or image-only PDFs have no text layer and are rejected.
+ALFRED is still an ongoing project, and there are several capabilities I want to explore in future phases.
 
-Set `DEFAULT_TIMEZONE` (for example `Asia/Kolkata`) so "tomorrow at 9am" means your 9am.
+Some of the planned improvements include:
 
-Known limits: `web_search` returns snippets only (no page fetching yet); the
-DuckDuckGo backend is an unofficial scraper that can be rate-limited
-(`SearchProvider` is the seam for swapping in another engine); reminders are
-stored and listed but nothing notifies you when one comes due; there is no
-authentication yet, so keep the server on localhost.
+- Vision capabilities
+- Computer interaction
+- Advanced automation
+- Improved workflow execution
+- Expanded tool integrations
+- Further improvements to memory
+- More advanced agent capabilities
+- Additional interaction methods
 
-## Tests
+These are planned directions for development and may change as the project evolves.
 
-Agent, tool and voice-route tests mock their providers: no Gemini key, Whisper download or network
-access needed. The PostgreSQL tests run when `TEST_DATABASE_URL` points at a **disposable** database
-(its ALFRED tables are emptied for every test) and are skipped otherwise.
+---
 
-```bash
-cd alfred/backend
-pytest                                   # everything that needs no database
-TEST_DATABASE_URL=postgresql://alfred:your_password@localhost:5432/alfred_test pytest   # plus PostgreSQL tests
+## Why I Started Building ALFRED
 
-cd ../frontend
-npm test          # orb controller and drag, silence detector, audio level, activity, workflow helpers (Node 22+)
-```
+I started ALFRED because I wanted to understand what goes into building an AI assistant beyond simply connecting an LLM to an interface.
 
-## Environment variables
+As the project grew, I started working with agent orchestration, tool calling, voice processing, databases, persistent memory, workflow management and frontend development. Each phase introduced new challenges and gave me an opportunity to learn something different.
 
-See `.env.example` at the repo root. `GEMINI_API_KEY` and `GEMINI_MODEL`
-are required; `MAX_AGENT_ITERATIONS` bounds tool-call loops (default 8);
-`WHISPER_MODEL_SIZE`/`WHISPER_COMPUTE_TYPE`/`WHISPER_LANGUAGE`/`WHISPER_INITIAL_PROMPT` tune
-transcription; `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` configure speech synthesis;
-`DEFAULT_TIMEZONE`, `REQUIRE_MEDIUM_CONFIRMATION`, `ALFRED_DATA_DIR`, `MAX_UPLOAD_MB` and
-`SEARCH_MAX_RESULTS` configure the Phase 3 tools. `DATABASE_URL` (or `POSTGRES_*`), `MEMORY_*`,
-`DB_*` and `MAX_CONTEXT_*` configure Phase 4 memory; each is documented in `.env.example`.
-`MAX_WORKFLOW_TASKS`, `MAX_TASK_RETRIES`, `WORKFLOW_EXECUTION_TIMEOUT`, `WORKFLOW_CONCURRENCY`,
-`WORKFLOW_RETRY_DELAY_SECONDS` and `WORKFLOW_TOOL_WAIT_SECONDS` configure Phase 5 workflows.
+ALFRED is a project that I'm continuing to build and improve as I learn more about AI and software engineering.
 
-## Frontend design notes
+---
 
-The voice UI is monochrome: near-black surfaces, a single neutral accent and one desaturated
-red-grey reserved for errors (see `frontend/src/styles/tokens.css`). The centre of the screen is a
-wireframe orb (orbital rings and a particle cluster) that you can drag to rotate; the conversation
-history, text input, workspace and agent-activity trace live in a bottom sheet opened with the
-History button. The sheet closes with its X button, the Hide history button, a click outside it, or Esc.
+**ALFRED**
 
-## Security notes (Phase 1 to 4)
+*Adaptive Language Framework for Reasoning, Execution & Dialogue*
 
-- The calculator never uses `eval()` — it walks a restricted AST and only
-  allows numeric literals, a fixed operator whitelist, and a handful of
-  safe math functions.
-- Only tools registered in `ToolRegistry` can ever execute (allowlisting);
-  unknown tool names returned by the model are rejected before anything runs.
-- Tool arguments are validated against a Pydantic schema before execution;
-  invalid arguments never reach a tool's `execute()`.
-- The Gemini API key is read from the environment only, never hard-coded,
-  never sent to the frontend.
-- `docs/SECURITY.md` will expand as later phases add real network/file/
-  messaging tools with MEDIUM/HIGH permission levels.
-- Web results and document text are wrapped in untrusted-content markers
-  before the model sees them, and the system prompt tells the model to treat
-  them as data, never instructions. This reduces prompt-injection risk; it
-  cannot eliminate it, which is why side-effecting tools ask for confirmation.
-- Confirmations are server-side state, not a client flag (the old
-  `auto_approve_confirmations` request field was removed).
-- Memory is written only from the user's own words (never tool output, web content or documents),
-  secrets such as passwords, API keys and card numbers are never extracted, and database credentials
-  come from the environment only.
-- Uploads are validated by size, extension and content signature, stored under
-  generated names, and DOCX files containing XML DTDs are rejected.
+> Understand. Reason. Act.
